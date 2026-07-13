@@ -4,6 +4,6 @@
 
 @layer base {
   html, body {
-    @apply h-full w-full m-0 p-0 font-sans bg-gray-50 text-gray-900;
+    @apply h-full w-full m-0 p-0 font-sans bg-[#f8fafc] text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-900;
   }
 }

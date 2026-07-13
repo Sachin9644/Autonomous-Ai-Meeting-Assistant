@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import ChatModal from '../components/ChatModal';
 import TranscriptModal from '../components/TranscriptModal';
 import AudioModal from '../components/AudioModal';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CalendarPlus, LogOut, MessageSquare, FileText, PlayCircle, Clock, Calendar as CalendarIcon, Video } from 'lucide-react';
 
 export default function Dashboard() {
     const { user, logout } = useAuthStore();
@@ -52,128 +54,185 @@ export default function Dashboard() {
         navigate('/');
     };
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 10 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="bg-white shadow-sm">
+        <div className="min-h-screen bg-[#f8fafc]">
+            {/* Minimalist Topbar */}
+            <nav className="bg-white border-b border-slate-200 sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
-                        <div className="flex items-center">
-                            <h1 className="text-xl font-bold text-indigo-600">Meeting Intelligence</h1>
+                        <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                <Video className="h-4 w-4 text-white" />
+                            </div>
+                            <h1 className="text-lg font-semibold text-slate-900 tracking-tight">Meeting Intelligence</h1>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <span className="text-gray-700">Welcome, {user?.name}</span>
-                            <button onClick={handleLogout} className="text-sm text-red-600 hover:text-red-800">Logout</button>
+                        <div className="flex items-center gap-6">
+                            <span className="text-sm text-slate-600 font-medium">{user?.name}</span>
+                            <button 
+                                onClick={handleLogout} 
+                                className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-red-600 transition-colors"
+                            >
+                                <LogOut className="h-4 w-4" />
+                                Logout
+                            </button>
                         </div>
                     </div>
                 </div>
             </nav>
 
-            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                <div className="px-4 py-6 sm:px-0">
-                    <div className="bg-white rounded-lg shadow p-6 mb-8">
-                        <h2 className="text-lg font-medium text-gray-900 mb-4">Schedule New Meeting</h2>
-                        <form onSubmit={handleSchedule} className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-8">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Meeting Title</label>
-                                <input type="text" required value={title} onChange={e => setTitle(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
+            <main className="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    {/* Left Column: Schedule Form */}
+                    <div className="lg:col-span-1">
+                        <motion.div 
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 p-6 sticky top-24"
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-indigo-50 rounded-lg">
+                                    <CalendarPlus className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <h2 className="text-base font-semibold text-slate-900">Schedule Meeting</h2>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Meeting Link (Meet/Zoom)</label>
-                                <input type="url" required value={meetingLink} onChange={e => setMeetingLink(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Date</label>
-                                <input type="date" required value={date} onChange={e => setDate(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Time</label>
-                                <input type="time" required value={time} onChange={e => setTime(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
-                            </div>
-                            <div className="sm:col-span-2">
-                                <button type="submit" className="w-full inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
-                                    Schedule Meeting
-                                </button>
-                            </div>
-                        </form>
+
+                            <form onSubmit={handleSchedule} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Title</label>
+                                    <input type="text" required value={title} onChange={e => setTitle(e.target.value)} className="block w-full rounded-lg border-0 py-2 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm transition-all" placeholder="e.g. Q3 Sync" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Link</label>
+                                    <input type="url" required value={meetingLink} onChange={e => setMeetingLink(e.target.value)} className="block w-full rounded-lg border-0 py-2 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm transition-all" placeholder="https://meet.google.com/..." />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Date</label>
+                                        <input type="date" required value={date} onChange={e => setDate(e.target.value)} className="block w-full rounded-lg border-0 py-2 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm transition-all" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Time</label>
+                                        <input type="time" required value={time} onChange={e => setTime(e.target.value)} className="block w-full rounded-lg border-0 py-2 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm transition-all" />
+                                    </div>
+                                </div>
+                                <div className="pt-2">
+                                    <button type="submit" className="w-full flex items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all">
+                                        Schedule Automator
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow">
-                        <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
-                            <h3 className="text-lg leading-6 font-medium text-gray-900">Your Meetings</h3>
+                    {/* Right Column: Meetings List */}
+                    <div className="lg:col-span-2">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-slate-900">Your Meetings</h3>
                         </div>
-                        <ul className="divide-y divide-gray-200">
+
+                        <motion.div 
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="show"
+                            className="space-y-4"
+                        >
                             {meetings.length === 0 ? (
-                                <li className="p-6 text-center text-gray-500">No meetings scheduled yet.</li>
+                                <motion.div variants={itemVariants} className="bg-white rounded-2xl border border-slate-200 border-dashed p-12 text-center">
+                                    <CalendarIcon className="mx-auto h-8 w-8 text-slate-300 mb-3" />
+                                    <p className="text-sm font-medium text-slate-500">No meetings scheduled yet.</p>
+                                </motion.div>
                             ) : meetings.map((meeting) => (
-                                <li 
+                                <motion.div 
+                                    variants={itemVariants}
                                     key={meeting._id} 
-                                    className="px-4 py-4 sm:px-6 flex justify-between items-center transition-colors hover:bg-gray-50"
+                                    className="group bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-indigo-100 transition-all duration-200"
                                 >
-                                    <div>
-                                        <p className="text-sm font-medium text-indigo-600 truncate">{meeting.title}</p>
-                                        <div className="mt-2 sm:flex sm:justify-between">
-                                            <div className="sm:flex">
-                                                <p className="flex items-center text-sm text-gray-500">
-                                                    {meeting.date} at {meeting.time}
-                                                </p>
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        
+                                        {/* Meeting Info */}
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <h4 className="text-base font-semibold text-slate-900">{meeting.title}</h4>
+                                                <span className={`px-2.5 py-0.5 inline-flex text-[10px] uppercase tracking-wider font-bold rounded-full 
+                                                    ${meeting.status === 'Scheduled' ? 'bg-amber-100 text-amber-700' : 
+                                                    meeting.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 
+                                                    'bg-blue-100 text-blue-700'}`}>
+                                                    {meeting.status}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-sm text-slate-500">
+                                                <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {meeting.date}</span>
+                                                <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {meeting.time}</span>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            ${meeting.status === 'Scheduled' ? 'bg-yellow-100 text-yellow-800' : 
-                                              meeting.status === 'Completed' ? 'bg-green-100 text-green-800' : 
-                                              'bg-blue-100 text-blue-800'}`}>
-                                            {meeting.status}
-                                        </span>
-                                        <div className="flex gap-2 mt-2">
+
+                                        {/* Actions */}
+                                        <div className="flex flex-wrap gap-2">
                                             <button 
                                                 onClick={() => setViewTranscriptMeeting(meeting)}
-                                                className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded"
+                                                className="flex items-center gap-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded-md transition-colors"
                                             >
-                                                Transcript
+                                                <FileText className="h-3.5 w-3.5" /> Transcript
                                             </button>
                                             <button 
                                                 onClick={() => setPlayAudioMeeting(meeting)}
-                                                className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 py-1 px-2 rounded"
+                                                className="flex items-center gap-1.5 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-1.5 px-3 rounded-md transition-colors"
                                             >
-                                                Play Audio
+                                                <PlayCircle className="h-3.5 w-3.5" /> Audio
                                             </button>
                                             <button 
                                                 onClick={() => setSelectedMeeting(meeting)}
-                                                className="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-1 px-2 rounded"
+                                                className="flex items-center gap-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white py-1.5 px-3 rounded-md shadow-sm transition-all"
                                             >
-                                                Chat with AI
+                                                <MessageSquare className="h-3.5 w-3.5" /> Ask AI
                                             </button>
                                         </div>
+
                                     </div>
-                                </li>
+                                </motion.div>
                             ))}
-                        </ul>
+                        </motion.div>
                     </div>
+
                 </div>
             </main>
 
-            {selectedMeeting && (
-                <ChatModal 
-                    meeting={selectedMeeting} 
-                    onClose={() => setSelectedMeeting(null)} 
-                />
-            )}
-
-            {viewTranscriptMeeting && (
-                <TranscriptModal 
-                    meeting={viewTranscriptMeeting} 
-                    onClose={() => setViewTranscriptMeeting(null)} 
-                />
-            )}
-
-            {playAudioMeeting && (
-                <AudioModal 
-                    meeting={playAudioMeeting} 
-                    onClose={() => setPlayAudioMeeting(null)} 
-                />
-            )}
+            <AnimatePresence>
+                {selectedMeeting && (
+                    <ChatModal 
+                        meeting={selectedMeeting} 
+                        onClose={() => setSelectedMeeting(null)} 
+                    />
+                )}
+                {viewTranscriptMeeting && (
+                    <TranscriptModal 
+                        meeting={viewTranscriptMeeting} 
+                        onClose={() => setViewTranscriptMeeting(null)} 
+                    />
+                )}
+                {playAudioMeeting && (
+                    <AudioModal 
+                        meeting={playAudioMeeting} 
+                        onClose={() => setPlayAudioMeeting(null)} 
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { motion } from 'framer-motion';
+import { X, FileText, Loader2 } from 'lucide-react';
 
 export default function TranscriptModal({ meeting, onClose }) {
     const [transcript, setTranscript] = useState('');
@@ -21,48 +23,77 @@ export default function TranscriptModal({ meeting, onClose }) {
     }, [meeting._id]);
 
     return (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[80vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2 }}
+                className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden border border-slate-200"
+            >
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-800 rounded-t-lg">
-                    <h3 className="text-lg font-medium text-white truncate">
-                        Raw Transcript: {meeting.title}
-                    </h3>
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                            <FileText className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-semibold text-slate-900 truncate pr-4">
+                                Raw Transcript
+                            </h3>
+                            <p className="text-xs font-medium text-slate-500 truncate">
+                                Context: {meeting.title}
+                            </p>
+                        </div>
+                    </div>
                     <button 
                         onClick={onClose}
-                        className="text-white hover:text-gray-300 focus:outline-none"
+                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none"
                     >
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <X className="h-5 w-5" />
                     </button>
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 p-6 overflow-y-auto bg-gray-50 whitespace-pre-wrap font-mono text-sm text-gray-800">
+                <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50">
                     {isLoading ? (
-                        <div className="h-full flex items-center justify-center">
-                            <p className="text-gray-500 animate-pulse">Loading transcript...</p>
+                        <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                            <Loader2 className="h-8 w-8 animate-spin mb-4 text-indigo-400" />
+                            <p className="text-sm font-medium">Loading transcript...</p>
                         </div>
                     ) : error ? (
                         <div className="h-full flex items-center justify-center">
-                            <p className="text-red-500">{error}</p>
+                            <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 max-w-md text-center text-sm font-medium shadow-sm">
+                                {error}
+                            </div>
                         </div>
                     ) : (
-                        transcript || "Transcript is completely empty."
+                        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                            <pre className="whitespace-pre-wrap font-mono text-xs sm:text-sm text-slate-700 leading-relaxed max-w-full overflow-x-hidden">
+                                {transcript || "Transcript is completely empty."}
+                            </pre>
+                        </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200 bg-white rounded-b-lg flex justify-end">
+                <div className="px-6 py-4 bg-white border-t border-slate-100 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none"
+                        className="inline-flex justify-center rounded-lg bg-slate-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-slate-800 transition-colors focus:outline-none"
                     >
-                        Close
+                        Close Transcript
                     </button>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }
