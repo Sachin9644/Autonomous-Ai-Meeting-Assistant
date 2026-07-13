@@ -35,13 +35,13 @@ export default function AudioModal({ meeting, onClose }) {
     }, [audioUrl, token]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 font-sans">
             <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={onClose}
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
             
             <motion.div 
@@ -49,56 +49,56 @@ export default function AudioModal({ meeting, onClose }) {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.2 }}
-                className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg h-auto flex flex-col overflow-hidden border border-slate-200"
+                className="relative bg-white border-4 border-black shadow-neo w-full max-w-lg h-auto flex flex-col overflow-hidden"
             >
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white z-10">
+                <div className="px-6 py-4 border-b-4 border-black flex justify-between items-center bg-neo-blue z-10">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-50 rounded-lg">
-                            <PlayCircle className="h-5 w-5 text-indigo-600" />
+                        <div className="p-2 bg-black border-2 border-black">
+                            <PlayCircle className="h-6 w-6 text-neo-blue" />
                         </div>
                         <div>
-                            <h3 className="text-base font-semibold text-slate-900 truncate pr-4">
-                                Meeting Recording
+                            <h3 className="text-xl font-black text-black uppercase tracking-tight truncate pr-4">
+                                Meeting Audio
                             </h3>
-                            <p className="text-xs font-medium text-slate-500 truncate">
+                            <p className="text-xs font-bold text-black/80 uppercase truncate">
                                 Context: {meeting.title}
                             </p>
                         </div>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none"
+                        className="p-2 text-black border-2 border-transparent hover:bg-black hover:text-neo-blue transition-colors focus:outline-none"
                     >
-                        <X className="h-5 w-5" />
+                        <X className="h-6 w-6" strokeWidth={3} />
                     </button>
                 </div>
 
                 {/* Content Area */}
-                <div className="p-8 flex flex-col items-center justify-center bg-slate-50/50 min-h-[160px]">
+                <div className="p-8 flex flex-col items-center justify-center bg-neo-bg min-h-[160px]">
                     {error ? (
-                        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 w-full text-center text-sm font-medium shadow-sm">
+                        <div className="bg-neo-pink text-black p-4 border-4 border-black w-full text-center text-sm font-black uppercase shadow-neo-sm">
                             {error}
                         </div>
                     ) : audioSrc ? (
-                        <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <div className="w-full bg-white p-4 border-4 border-black shadow-neo-sm">
                             <audio controls className="w-full" src={audioSrc} autoPlay>
                                 Your browser does not support the audio element.
                             </audio>
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center text-slate-400">
-                            <Loader2 className="h-8 w-8 animate-spin mb-3 text-indigo-400" />
-                            <p className="text-sm font-medium">Fetching secure audio stream...</p>
+                        <div className="flex flex-col items-center justify-center text-black">
+                            <Loader2 className="h-10 w-10 animate-spin mb-3" strokeWidth={3} />
+                            <p className="text-base font-black uppercase">Fetching secure audio...</p>
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 bg-white border-t border-slate-100 flex justify-end">
+                <div className="px-6 py-4 bg-white border-t-4 border-black flex justify-end">
                     <button
                         onClick={onClose}
-                        className="inline-flex justify-center rounded-lg bg-slate-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-slate-800 transition-colors focus:outline-none"
+                        className="inline-flex justify-center bg-black py-3 px-6 text-base font-black uppercase text-white shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-neo-sm active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all focus:outline-none"
                     >
                         Close
                     </button>

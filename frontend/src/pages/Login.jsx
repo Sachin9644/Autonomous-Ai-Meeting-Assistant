@@ -23,22 +23,22 @@ export default function Login() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-screen items-center justify-center bg-neo-bg px-4 sm:px-6 lg:px-8 font-sans">
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
-                className="w-full max-w-md space-y-8 bg-white p-8 sm:p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100"
+                className="w-full max-w-md space-y-8 bg-white p-8 sm:p-10 border-4 border-black shadow-neo"
             >
                 <div>
-                    <div className="mx-auto h-12 w-12 bg-indigo-50 rounded-xl flex items-center justify-center">
-                        <LogIn className="h-6 w-6 text-indigo-600" />
+                    <div className="mx-auto h-16 w-16 bg-neo-yellow border-4 border-black shadow-neo-sm flex items-center justify-center">
+                        <LogIn className="h-8 w-8 text-black" />
                     </div>
-                    <h2 className="mt-6 text-center text-2xl font-semibold tracking-tight text-slate-900">
-                        Welcome back
+                    <h2 className="mt-8 text-center text-4xl font-black tracking-tight text-black uppercase">
+                        Welcome!
                     </h2>
-                    <p className="mt-2 text-center text-sm text-slate-500">
-                        Sign in to access your meeting intelligence
+                    <p className="mt-2 text-center text-base font-bold text-black/70 uppercase">
+                        Sign in to automate it all
                     </p>
                 </div>
 
@@ -47,33 +47,33 @@ export default function Login() {
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 text-center"
+                            className="bg-neo-pink text-black p-3 text-sm font-bold border-4 border-black shadow-neo-sm text-center"
                         >
                             {error}
                         </motion.div>
                     )}
                     
-                    <div className="space-y-4 rounded-md">
+                    <div className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium leading-6 text-slate-700">Email address</label>
+                            <label className="block text-sm font-bold uppercase leading-6 text-black">Email address</label>
                             <input
                                 type="email"
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="mt-2 block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all duration-200"
+                                className="mt-2 block w-full border-4 border-black py-2.5 px-4 text-black shadow-neo-sm focus:outline-none focus:ring-0 focus:translate-x-1 focus:translate-y-1 focus:shadow-none transition-all sm:text-base font-medium"
                                 placeholder="you@company.com"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium leading-6 text-slate-700">Password</label>
+                            <label className="block text-sm font-bold uppercase leading-6 text-black">Password</label>
                             <input
                                 type="password"
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="mt-2 block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all duration-200"
+                                className="mt-2 block w-full border-4 border-black py-2.5 px-4 text-black shadow-neo-sm focus:outline-none focus:ring-0 focus:translate-x-1 focus:translate-y-1 focus:shadow-none transition-all sm:text-base font-medium"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -83,16 +83,16 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="flex w-full justify-center rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 transition-all duration-200"
+                            className="flex w-full justify-center bg-neo-green border-4 border-black px-3 py-3 text-lg font-black uppercase text-black shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-neo-sm active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? 'Signing in...' : 'Sign in'}
+                            {isLoading ? 'SIGNING IN...' : 'SIGN IN'}
                         </button>
                     </div>
                 </form>
 
-                <p className="mt-10 text-center text-sm text-slate-500">
+                <p className="mt-10 text-center text-sm font-bold text-black uppercase">
                     Don't have an account?{' '}
-                    <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
+                    <Link to="/register" className="text-neo-blue underline decoration-4 decoration-neo-blue hover:text-black hover:decoration-black transition-colors">
                         Sign up
                     </Link>
                 </p>
