@@ -9,10 +9,10 @@ class Settings(BaseSettings):
     # Models
     WHISPER_MODEL: str = "whisper-large-v3"
     EMBEDDING_MODEL: str = "models/gemini-embedding-2"
-    CHAT_MODEL: str = "gemini-1.5-flash"
+    CHAT_MODEL: str = "gemini-flash-latest"
     
-    # Directory paths relative to the project root
-    BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+    # Directory paths relative to the project root (Agentic)
+    BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     DATA_DIR: str = os.path.join(BASE_DIR, "data")
     RECORDINGS_DIR: str = os.path.join(DATA_DIR, "recordings")
     TRANSCRIPTS_DIR: str = os.path.join(DATA_DIR, "transcripts")

@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import useAuthStore from '../store/useAuthStore';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import ChatModal from '../components/ChatModal';
+import TranscriptModal from '../components/TranscriptModal';
+import AudioModal from '../components/AudioModal';
 
 export default function Dashboard() {
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
     const [meetings, setMeetings] = useState([]);
+    const [selectedMeeting, setSelectedMeeting] = useState(null);
+    const [viewTranscriptMeeting, setViewTranscriptMeeting] = useState(null);
+    const [playAudioMeeting, setPlayAudioMeeting] = useState(null);
     
     // Form State
     const [title, setTitle] = useState('');
@@ -99,7 +105,10 @@ export default function Dashboard() {
                             {meetings.length === 0 ? (
                                 <li className="p-6 text-center text-gray-500">No meetings scheduled yet.</li>
                             ) : meetings.map((meeting) => (
-                                <li key={meeting._id} className="px-4 py-4 sm:px-6 hover:bg-gray-50 flex justify-between items-center">
+                                <li 
+                                    key={meeting._id} 
+                                    className="px-4 py-4 sm:px-6 flex justify-between items-center transition-colors hover:bg-gray-50"
+                                >
                                     <div>
                                         <p className="text-sm font-medium text-indigo-600 truncate">{meeting.title}</p>
                                         <div className="mt-2 sm:flex sm:justify-between">
@@ -117,6 +126,26 @@ export default function Dashboard() {
                                               'bg-blue-100 text-blue-800'}`}>
                                             {meeting.status}
                                         </span>
+                                        <div className="flex gap-2 mt-2">
+                                            <button 
+                                                onClick={() => setViewTranscriptMeeting(meeting)}
+                                                className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-2 rounded"
+                                            >
+                                                Transcript
+                                            </button>
+                                            <button 
+                                                onClick={() => setPlayAudioMeeting(meeting)}
+                                                className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 py-1 px-2 rounded"
+                                            >
+                                                Play Audio
+                                            </button>
+                                            <button 
+                                                onClick={() => setSelectedMeeting(meeting)}
+                                                className="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-1 px-2 rounded"
+                                            >
+                                                Chat with AI
+                                            </button>
+                                        </div>
                                     </div>
                                 </li>
                             ))}
@@ -124,6 +153,27 @@ export default function Dashboard() {
                     </div>
                 </div>
             </main>
+
+            {selectedMeeting && (
+                <ChatModal 
+                    meeting={selectedMeeting} 
+                    onClose={() => setSelectedMeeting(null)} 
+                />
+            )}
+
+            {viewTranscriptMeeting && (
+                <TranscriptModal 
+                    meeting={viewTranscriptMeeting} 
+                    onClose={() => setViewTranscriptMeeting(null)} 
+                />
+            )}
+
+            {playAudioMeeting && (
+                <AudioModal 
+                    meeting={playAudioMeeting} 
+                    onClose={() => setPlayAudioMeeting(null)} 
+                />
+            )}
         </div>
     );
 }

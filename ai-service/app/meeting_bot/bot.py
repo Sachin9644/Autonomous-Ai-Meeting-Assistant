@@ -21,48 +21,41 @@ def run_bot_in_thread(meeting_id: str, meeting_link: str):
     finally:
         loop.close()
 
-# JS Script to inject into the meeting page to capture audio
-AUDIO_CAPTURE_JS = """
+# JS Script injected before page load to monkey-patch WebRTC and intercept audio tracks
+WEBRTC_INTERCEPT_JS = """
     window.recordedAudioChunks = [];
-    window.mediaRecorder = null;
+    window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    window.dest = window.audioCtx.createMediaStreamDestination();
     
-    // Create an AudioContext to mix all incoming audio streams
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const dest = audioCtx.createMediaStreamDestination();
-    
-    // Periodically find new <audio> and <video> elements and route them to our destination
-    setInterval(() => {
-        document.querySelectorAll('audio, video').forEach(mediaElement => {
-            if (!mediaElement.capturedForRecording) {
-                try {
-                    // Route audio to our recorder
-                    const source = audioCtx.createMediaElementSource(mediaElement);
-                    source.connect(dest);
-                    // Also connect back to speakers so we can hear it
-                    source.connect(audioCtx.destination);
-                    mediaElement.capturedForRecording = true;
-                    console.log("Audio source captured for recording");
-                } catch (e) {
-                    console.error("Error capturing audio element:", e);
-                }
-            }
-        });
-    }, 2000);
-
-    // Start recording the mixed stream
-    window.mediaRecorder = new MediaRecorder(dest.stream, { mimeType: 'audio/webm' });
-    window.mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-            // Read blob as base64 and push to our array so Python can extract it
+    // Start MediaRecorder immediately on the empty stream so we always get a valid file
+    window.mediaRecorder = new MediaRecorder(window.dest.stream, { mimeType: 'audio/webm' });
+    window.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
             const reader = new FileReader();
-            reader.readAsDataURL(e.data);
+            reader.readAsDataURL(event.data);
             reader.onloadend = () => {
                 window.recordedAudioChunks.push(reader.result);
             };
         }
     };
-    window.mediaRecorder.start(2000); // Generate chunks every 2 seconds
-    console.log("Audio recording started.");
+    window.mediaRecorder.start(2000);
+    console.log("WebRTC Audio recording started (baseline).");
+
+    const origSetRemoteDescription = RTCPeerConnection.prototype.setRemoteDescription;
+    RTCPeerConnection.prototype.setRemoteDescription = function() {
+        this.addEventListener('track', (e) => {
+            if (e.track.kind === 'audio') {
+                console.log("Intercepted incoming WebRTC audio track!");
+                // Create a stream from the incoming track and route it to our recorder
+                const stream = new MediaStream([e.track]);
+                const source = window.audioCtx.createMediaStreamSource(stream);
+                source.connect(window.dest);
+                // Play it through the local speakers so you can hear it too
+                source.connect(window.audioCtx.destination); 
+            }
+        });
+        return origSetRemoteDescription.apply(this, arguments);
+    };
 """
 
 async def get_participant_count(page):
@@ -93,11 +86,15 @@ async def get_participant_count(page):
 
 async def join_and_record_meeting(meeting_id: str, meeting_link: str):
     """
-    Playwright bot to join the meeting, mute mic/cam, and record audio using the persistent Google Profile.
+    Playwright bot to join the meeting, mute mic/cam, and record system audio using WASAPI loopback.
     """
     logger.info(f"Starting bot for meeting {meeting_id} at {meeting_link}")
     
-    audio_path = os.path.join(settings.RECORDINGS_DIR, f"meeting_{meeting_id}.webm")
+    audio_path = os.path.join(settings.RECORDINGS_DIR, f"meeting_{meeting_id}.wav")
+    
+    # Initialize the System Audio Recorder
+    from app.audio.recorder import SystemAudioRecorder
+    recorder = SystemAudioRecorder(output_path=audio_path)
 
     try:
         async with async_playwright() as p:
@@ -135,7 +132,7 @@ async def join_and_record_meeting(meeting_id: str, meeting_link: str):
                 # Now look for the join button using a robust regex search
                 # This matches anything containing "Join now" or "Ask to join" (case insensitive)
                 join_btn = page.locator("text=/Join now|Ask to join/i").first
-                await join_btn.wait_for(state="visible", timeout=15000)
+                await join_btn.wait_for(state="visible", timeout=60000)
                 await join_btn.click()
                 logger.info("Clicked Join button.")
             except Exception as e:
@@ -156,46 +153,36 @@ async def join_and_record_meeting(meeting_id: str, meeting_link: str):
             # Give the meeting DOM a moment to fully render
             await asyncio.sleep(2)
             
-            logger.info("Injecting Audio Capture Script...")
-            await page.evaluate(AUDIO_CAPTURE_JS)
+            logger.info("Starting System Audio Recording...")
+            recorder.start()
             
-            logger.info("Recording started. Monitoring participants...")
+            max_p_count = 0
             
-            with open(audio_path, 'wb') as f:
-                # Polling loop
-                while True:
-                    await asyncio.sleep(5)
+            # Polling loop
+            while True:
+                await asyncio.sleep(5)
+                        
+                # Check participant count
+                p_count = await get_participant_count(page)
+                logger.info(f"Current participant count: {p_count}")
+                
+                if p_count is not None:
+                    if p_count > max_p_count:
+                        max_p_count = p_count
                     
-                    # Extract base64 audio chunks from the browser
-                    chunks = await page.evaluate("""
-                        () => {
-                            if (!window.recordedAudioChunks) return [];
-                            const data = window.recordedAudioChunks.slice();
-                            window.recordedAudioChunks = []; // clear extracted
-                            return data;
-                        }
-                    """)
-                    for chunk in chunks:
-                        # chunk format: "data:audio/webm;base64,GkXf..."
-                        if "," in chunk:
-                            b64_data = chunk.split(",")[1]
-                            f.write(base64.b64decode(b64_data))
-                            
-                    # Check participant count
-                    p_count = await get_participant_count(page)
-                    logger.info(f"Current participant count: {p_count}")
-                    
-                    # If we successfully parsed the count and it's 1 (only the bot left)
-                    if p_count is not None and p_count <= 1:
-                        logger.info("Only 1 participant left. Exiting meeting...")
+                    # If it's just the bot left, BUT it previously saw other people (meeting started)
+                    if p_count <= 1 and max_p_count > 1:
+                        logger.info("Meeting has concluded (only 1 participant left). Exiting meeting...")
                         break
-                    
-                    # Also check if we were kicked out (e.g. "You've been removed from the meeting")
-                    is_removed = await page.locator("text=You've been removed").count()
-                    if is_removed > 0:
-                        logger.info("Bot was removed from the meeting.")
-                        break
+                
+                # Also check if we were kicked out (e.g. "You've been removed from the meeting")
+                is_removed = await page.locator("text=You've been removed").count()
+                if is_removed > 0:
+                    logger.info("Bot was removed from the meeting.")
+                    break
 
+            # Stop recording
+            recorder.stop()
             logger.info(f"Meeting ended. Audio saved to {audio_path}")
             
             await context.close()
@@ -207,6 +194,12 @@ async def join_and_record_meeting(meeting_id: str, meeting_link: str):
     except Exception as e:
         logger.error(f"Fatal Error in bot: {str(e)}")
         logger.error(traceback.format_exc())
+        # Ensure we stop recording if it crashed
+        try:
+            if hasattr(recorder, 'is_recording') and recorder.is_recording:
+                recorder.stop()
+        except:
+            pass
 
 if __name__ == "__main__":
     # Test script locally

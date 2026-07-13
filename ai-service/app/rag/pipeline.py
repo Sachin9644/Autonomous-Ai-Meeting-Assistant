@@ -45,6 +45,17 @@ async def index_transcript(meeting_id: str, transcript_path: str):
         )
         logger.info(f"Successfully indexed transcript into ChromaDB at {settings.CHROMADB_DIR}")
 
+        # Notify Node.js Backend that meeting is fully processed and save transcript path
+        import requests
+        try:
+            requests.patch(f"http://127.0.0.1:3001/api/v1/meetings/{meeting_id}/internal-update", json={
+                "status": "Completed",
+                "transcriptPath": transcript_path
+            })
+            logger.info("Successfully updated meeting status in backend database.")
+        except Exception as patch_e:
+            logger.error(f"Failed to update backend status: {patch_e}")
+
     except Exception as e:
         logger.error(f"Error during indexing: {e}")
 
