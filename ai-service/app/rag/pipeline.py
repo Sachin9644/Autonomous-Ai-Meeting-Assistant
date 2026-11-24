@@ -4,7 +4,8 @@ import logging
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -29,12 +30,7 @@ async def index_transcript(meeting_id: str, transcript_path: str):
         splits = text_splitter.split_documents(docs)
         logger.info(f"Split transcript into {len(splits)} chunks.")
         
-        api_key = settings.GEMINI_API_KEY
-        if not api_key:
-            logger.error("GEMINI_API_KEY is not set.")
-            return
-            
-        embeddings = GoogleGenerativeAIEmbeddings(model=settings.EMBEDDING_MODEL, google_api_key=api_key)
+        embeddings = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
         
         await asyncio.to_thread(
             Chroma.from_documents,
@@ -67,11 +63,11 @@ async def query_transcript(meeting_id: str, query: str) -> str:
     Retrieves relevant chunks from ChromaDB and uses an LLM to answer the user's question.
     """
     try:
-        api_key = settings.GEMINI_API_KEY
-        if not api_key:
-            return "Error: Please set GEMINI_API_KEY in your environment config to use the chat feature."
+        model_path = os.path.join(settings.MODELS_DIR, "Llama-3.2-3B-Instruct-Q4_K_M.gguf")
+        if not os.path.exists(model_path):
+            return "Error: Local Llama model not found. Please run 'python download_models.py' first!"
             
-        embeddings = GoogleGenerativeAIEmbeddings(model=settings.EMBEDDING_MODEL, google_api_key=api_key)
+        embeddings = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
         
         # Load existing vectorstore
         vectorstore = Chroma(
@@ -82,19 +78,34 @@ async def query_transcript(meeting_id: str, query: str) -> str:
         
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
         
-        llm = ChatGoogleGenerativeAI(model=settings.CHAT_MODEL, google_api_key=api_key)
+        from langchain_community.llms import LlamaCpp
         
-        system_prompt = (
-            "You are an AI assistant analyzing a meeting transcript. "
-            "Use the following pieces of retrieved context to answer the user's question. "
-            "If you don't know the answer, just say that you don't know based on the transcript. "
-            "Context: {context}"
+        llm = LlamaCpp(
+            model_path=model_path,
+            temperature=0.3,
+            max_tokens=500,
+            n_ctx=8192, # Max memory for reading transcripts
+            verbose=False
         )
         
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("human", "{input}"),
-        ])
+        from langchain_core.prompts import PromptTemplate
+        
+        # We must format the prompt using Llama 3.2's exact special tokens,
+        # otherwise the raw local model gets confused and hallucinates repetitive answers!
+        llama3_template = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful assistant. Answer the user's question directly and concisely based ONLY on the following context. DO NOT start your response with 'Based on the transcript'. Just provide the direct answer. If the answer is not in the context, say 'I don't know'.
+
+Context: {context}<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+{input}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+"""
+        
+        prompt = PromptTemplate(
+            template=llama3_template,
+            input_variables=["context", "input"]
+        )
         
         rag_chain = (
             {"context": retriever | format_docs, "input": RunnablePassthrough()}

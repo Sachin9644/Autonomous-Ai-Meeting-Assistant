@@ -162,23 +162,27 @@ async def join_and_record_meeting(meeting_id: str, meeting_link: str):
             while True:
                 await asyncio.sleep(5)
                         
-                # Check participant count
-                p_count = await get_participant_count(page)
-                logger.info(f"Current participant count: {p_count}")
-                
-                if p_count is not None:
-                    if p_count > max_p_count:
-                        max_p_count = p_count
+                try:
+                    # Check participant count
+                    p_count = await get_participant_count(page)
+                    logger.info(f"Current participant count: {p_count}")
                     
-                    # If it's just the bot left, BUT it previously saw other people (meeting started)
-                    if p_count <= 1 and max_p_count > 1:
-                        logger.info("Meeting has concluded (only 1 participant left). Exiting meeting...")
+                    if p_count is not None:
+                        if p_count > max_p_count:
+                            max_p_count = p_count
+                        
+                        # If it's just the bot left, BUT it previously saw other people (meeting started)
+                        if p_count <= 1 and max_p_count > 1:
+                            logger.info("Meeting has concluded (only 1 participant left). Exiting meeting...")
+                            break
+                    
+                    # Also check if we were kicked out (e.g. "You've been removed from the meeting")
+                    is_removed = await page.locator("text=You've been removed").count()
+                    if is_removed > 0:
+                        logger.info("Bot was removed from the meeting.")
                         break
-                
-                # Also check if we were kicked out (e.g. "You've been removed from the meeting")
-                is_removed = await page.locator("text=You've been removed").count()
-                if is_removed > 0:
-                    logger.info("Bot was removed from the meeting.")
+                except Exception as e:
+                    logger.info("Browser window was closed or connection lost during polling. Assuming meeting has ended...")
                     break
 
             # Stop recording

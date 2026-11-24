@@ -39,3 +39,13 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# AI Models & Large Weights
+ai-service/models/
+*.gguf
+*.bin
+*.onnx
+
+# Word lock files & temp files
+~$*.docx
+test_border.docx
